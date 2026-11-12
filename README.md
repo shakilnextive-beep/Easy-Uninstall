@@ -17,7 +17,7 @@
 </div>
 
 <p align="center">
-  <img src="docs/screenshot-home-en.png" width="860" alt="Easy Uninstall home screen">
+  <img src="docs/screenshot-ram.png" width="860" alt="Easy Uninstall">
 </p>
 
 ---
@@ -75,10 +75,8 @@
 
 ## 📸 Screenshots
 
-| Home (বাংলা) | Smart Clean |
+| RAM | About and updates |
 | --- | --- |
-| <img src="docs/screenshot-home-bn.png" alt="Home in Bangla"> | <img src="docs/screenshot-smart.png" alt="Smart Clean"> |
-| **RAM** | **About and updates** |
 | <img src="docs/screenshot-ram.png" alt="RAM"> | <img src="docs/screenshot-about.png" alt="About"> |
 
 ---
