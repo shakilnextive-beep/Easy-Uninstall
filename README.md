@@ -11,6 +11,7 @@
 [![Latest release](https://img.shields.io/github/v/release/shakilnextive-beep/Easy-Uninstall?label=latest&color=7F77DD)](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/shakilnextive-beep/Easy-Uninstall/total?color=1D9E75)](https://github.com/shakilnextive-beep/Easy-Uninstall/releases)
 ![macOS](https://img.shields.io/badge/macOS-13%2B-26215C)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
 ![Language](https://img.shields.io/badge/language-বাংলা%20%7C%20English-EF9F27)
 [![License: MIT](https://img.shields.io/badge/license-MIT-B4B2A9)](LICENSE)
 
@@ -27,9 +28,25 @@
 | Platform | Download | Status |
 | --- | --- | --- |
 | 🍎 **macOS** (Apple Silicon + Intel, macOS 13 or later) | [**Download for Mac**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-mac.zip) | ✅ Available |
-| 🪟 **Windows** (10 and 11, 64-bit) | [Build from source](#windows) — download coming with the next release | 🧪 Beta |
+| 🪟 **Windows** (10 and 11, 64-bit) | [**Download for Windows**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-windows.zip) | ✅ Available — new! |
 
+> 🎉 **Easy Uninstall is now on Windows too!** / **Easy Uninstall এখন Windows এও পাওয়া যাচ্ছে!**
+>
 > All versions: [Releases page](https://github.com/shakilnextive-beep/Easy-Uninstall/releases)
+
+### Install on Windows
+
+1. Download **Easy-Uninstall-windows.zip**, right-click it and choose **Extract All**.
+2. Double-click **Easy Uninstall.exe**. There is nothing to install — keep the file anywhere you like (Desktop, Documents…).
+3. The first time, Windows may show a blue box saying *Windows protected your PC*, because the app is free and not sold through the Microsoft Store. Click **More info**, then **Run anyway**.
+4. When you remove a program or a protected file, Windows may ask *Do you want to allow this app to make changes?* — click **Yes**.
+
+### Windows এ কিভাবে চালাবেন
+
+1. **Easy-Uninstall-windows.zip** download করে right-click → **Extract All** দিন।
+2. **Easy Uninstall.exe** তে double-click করুন। কিছু install করতে হয় না — ফাইলটা যেখানে খুশি রাখুন।
+3. প্রথমবার Windows নীল box এ *Windows protected your PC* দেখাতে পারে, কারণ app টি free, Microsoft Store এর বাইরে থেকে দেওয়া হচ্ছে। **More info** চেপে **Run anyway** দিন।
+4. কোন software বা protected ফাইল মুছার সময় Windows অনুমতি চাইলে **Yes** দিন।
 
 ### Install on Mac
 
