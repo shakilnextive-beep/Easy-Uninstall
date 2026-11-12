@@ -1,0 +1,15 @@
+name: 💡 Feature request / নতুন feature চাই
+description: Suggest an idea for Easy Uninstall — নতুন idea দিন
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea / আপনার idea
+      description: What should Easy Uninstall do? / Easy Uninstall এ কি যোগ করলে ভালো হয়?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful? / কেন দরকার?

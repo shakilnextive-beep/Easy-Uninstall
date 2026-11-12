@@ -1,0 +1,34 @@
+name: 🐞 Bug report / সমস্যা জানান
+description: Something is not working — কোন কিছু ঠিকমতো কাজ করছে না
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / কি হয়েছে?
+      description: Describe the problem. Screenshots help a lot. / সমস্যাটা লিখুন, screenshot দিলে ভালো হয়।
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / কিভাবে হলো?
+      placeholder: "1. Open Smart Clean\n2. Click Scan\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: App version / App এর version
+      description: About and updates page → Version
+      placeholder: "1.0.0"
+  - type: dropdown
+    id: os
+    attributes:
+      label: Platform
+      options: [macOS, Windows]
+    validations:
+      required: true
+  - type: input
+    id: osversion
+    attributes:
+      label: OS version
+      placeholder: "macOS 15.2"
