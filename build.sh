@@ -30,6 +30,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>CFBundleDocumentTypes</key><array><dict>
+    <key>CFBundleTypeName</key><string>Application</string>
+    <key>CFBundleTypeRole</key><string>Viewer</string>
+    <key>LSHandlerRank</key><string>Alternate</string>
+    <key>LSItemContentTypes</key><array><string>com.apple.application-bundle</string></array>
+  </dict></array>
   <key>NSHumanReadableCopyright</key><string>Creator: Md. Shakil (shakil.nextive@gmail.com)</string>
   <key>NSAppleEventsUsageDescription</key><string>Admin অনুমতি লাগে এমন ফাইল মুছতে।</string>
 </dict></plist>

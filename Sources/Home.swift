@@ -262,7 +262,8 @@ struct AppsPanel: View {
                 if picked.isEmpty {
                     Text(open != nil ? L("কোনো app এ click করলে Uninstall পেজ খুলবে", "Click an app to open the Uninstall page")
                                      : L("যেগুলো মুছতে চান সেগুলোতে click করে বেছে নিন", "Click the apps you want to remove"))
-                        .font(.callout).foregroundStyle(.secondary)
+                        .font(.callout).foregroundStyle(.secondary).lineLimit(1)
+                    DropHint()
                 } else {
                     let size = picked.reduce(Int64(0)) { $0 + max(0, store.sizes[$1.id] ?? 0) }
                     Text(L("\(picked.count) টি বাছাই · \(FS.pretty(size))", "\(picked.count) picked · \(FS.pretty(size))")).font(.callout.weight(.semibold))

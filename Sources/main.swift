@@ -83,7 +83,7 @@ enum Scanner {
         }
     }
 
-    private static func makeApp(_ url: URL) -> InstalledApp? {
+    static func makeApp(_ url: URL) -> InstalledApp? {
         let bundle = Bundle(url: url)
         let info = bundle?.infoDictionary ?? [:]
         let name = (info["CFBundleDisplayName"] as? String)
@@ -246,6 +246,8 @@ struct RootView: View {
     @StateObject private var ram = RamModel()
     @ObservedObject private var lang = Lang.shared
     @StateObject private var nav = Nav()
+    @StateObject private var dropping = Flag()
+    @ObservedObject private var inbox = DropInbox.shared
 
     var body: some View {
         NavigationSplitView {
@@ -255,6 +257,7 @@ struct RootView: View {
             detail
                 .id("\(nav.section)-\(lang.english)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay { if dropping.on { DropOverlay() } }
                 .sheet(item: $store.batch) { job in
                     BatchUninstallSheet(apps: job.apps, all: store.apps) { removed in
                         store.batch = nil
@@ -263,6 +266,12 @@ struct RootView: View {
                 }
         }
         .frame(minWidth: 900, minHeight: 640)
+        .onDrop(of: [.fileURL], isTargeted: $dropping.on) { DropInbox.load($0) }
+        .onReceive(inbox.$urls) { urls in
+            guard !urls.isEmpty else { return }
+            inbox.urls = []
+            store.uninstallDropped(urls, nav: nav)
+        }
         .onAppear { store.reload(); Updater.shared.check(silent: true) }
         .onChange(of: lang.english) { _ in
             // notes are written in the old language: scan again
@@ -499,10 +508,19 @@ struct OptionButton: View {
 
 // MARK: - App
 
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    // An app dropped on the Dock icon (or "Open With → Easy Uninstall")
+    func application(_ application: NSApplication, open urls: [URL]) {
+        DropInbox.shared.urls += urls
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
 struct EasyUninstallApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     init() { NSApplication.shared.setActivationPolicy(.regular) }
     var body: some Scene {
-        WindowGroup("Easy Uninstall") { RootView() }
+        Window("Easy Uninstall", id: "main") { RootView() }   // one window: dropped apps never open a second one
             .defaultSize(width: 1120, height: 800)
             .windowResizability(.contentMinSize)
     }

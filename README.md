@@ -75,7 +75,7 @@
 
 | | English | বাংলা |
 | --- | --- | --- |
-| 🗑️ | **Uninstall** — see all your apps in a grid or list, tick one or many, and remove them together. Choose *Only uninstall* (just the app) or *Full uninstall* (app + cache, preferences, logs and every leftover file). | **Uninstall** — সব app Grid বা List এ দেখুন, এক বা একাধিক app টিক দিয়ে একসাথে মুছুন। *শুধু Uninstall* অথবা *Full Uninstall* (সব related ফাইল সহ) বেছে নিন। |
+| 🗑️ | **Uninstall** — see all your apps in a grid or list, tick one or many, and remove them together — or just **drag an app from Finder onto the window or the Dock icon**. Choose *Only uninstall* (just the app) or *Full uninstall* (app + cache, preferences, logs and every leftover file). | **Uninstall** — সব app Grid বা List এ দেখুন, এক বা একাধিক app টিক দিয়ে একসাথে মুছুন — অথবা **Finder থেকে app টেনে এনে window বা Dock icon এ ছেড়ে দিন**। *শুধু Uninstall* অথবা *Full Uninstall* (সব related ফাইল সহ) বেছে নিন। |
 | 🖥️ | **Your Mac at a glance** — the home page shows a picture of your exact Mac model, its chip, memory and free space. | **এক নজরে আপনার Mac** — হোম পেজে আপনার Mac এর মডেলের ছবি, chip, RAM আর খালি জায়গা। |
 | ✨ | **Smart Clean** — finds only what's safe to delete (caches, logs, old updates, installers, Trash), shows you the list, then cleans everything in one click. | **Smart Clean** — শুধু নিরাপদে মুছা যায় এমন ফাইল খুঁজে তালিকা দেখায়, তারপর এক click এ সব মুছে Trash ও খালি করে। |
 | 📂 | **Where did my space go?** — browse folders sorted by size. | **জায়গা কোথায় গেল?** — কোন ফোল্ডার কত জায়গা নিচ্ছে দেখুন। |
