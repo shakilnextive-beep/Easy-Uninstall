@@ -199,6 +199,15 @@ final class Store: ObservableObject {
     @Published var loading = false
     @Published var sizes: [String: Int64] = [:]
     @Published var selected: InstalledApp?
+    @Published var picked: Set<String> = []
+    @Published var batch: BatchJob?
+    @Published var grid = (UserDefaults.standard.object(forKey: "appsGrid") as? Bool) ?? true {
+        didSet { UserDefaults.standard.set(grid, forKey: "appsGrid") }
+    }
+
+    func toggle(_ app: InstalledApp) {
+        if picked.contains(app.id) { picked.remove(app.id) } else { picked.insert(app.id) }
+    }
 
     var filtered: [InstalledApp] {
         let q = query.trimmingCharacters(in: .whitespaces)
@@ -212,6 +221,7 @@ final class Store: ObservableObject {
             let list = Scanner.loadApps()
             DispatchQueue.main.async {
                 self.apps = list
+                self.picked = self.picked.filter { id in list.contains { $0.id == id } }
                 self.loading = false
             }
         }
@@ -245,6 +255,12 @@ struct RootView: View {
             detail
                 .id("\(nav.section)-\(lang.english)")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .sheet(item: $store.batch) { job in
+                    BatchUninstallSheet(apps: job.apps, all: store.apps) { removed in
+                        store.batch = nil
+                        if removed { store.picked = []; refreshAfterRemove() }
+                    }
+                }
         }
         .frame(minWidth: 900, minHeight: 640)
         .onAppear { store.reload(); Updater.shared.check(silent: true) }
@@ -257,9 +273,13 @@ struct RootView: View {
         .sheet(item: $store.selected) { app in
             UninstallSheet(app: app, shared: store.apps.contains { $0.id != app.id && !app.bundleID.isEmpty && $0.bundleID == app.bundleID }) { removed in
                 store.selected = nil
-                if removed { store.reload(); cleanup.refreshDisk(); cleanup.suggestions = []; bloat.usage = []; bloat.loadItems() }
+                if removed { store.picked.remove(app.id); refreshAfterRemove() }
             }
         }
+    }
+
+    private func refreshAfterRemove() {
+        store.reload(); cleanup.refreshDisk(); cleanup.suggestions = []; bloat.usage = []; bloat.loadItems()
     }
 
     @ViewBuilder private var detail: some View {
@@ -281,48 +301,12 @@ struct ContentView: View {
     @ObservedObject var store: Store
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(L("Software এর নাম লিখুন…", "Type a software name…"), text: $store.query)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 18))
-                if !store.query.isEmpty {
-                    Button { store.query = "" } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain).foregroundStyle(.secondary)
-                }
-                Button { store.reload() } label: { Image(systemName: "arrow.clockwise") }
-                    .help(L("আবার খুঁজুন", "Search again"))
-            }
-            .padding(14)
-            .background(.bar)
-
-            Divider()
-
-            if store.loading && store.apps.isEmpty {
-                Spacer(); ProgressView(L("Apps খোঁজা হচ্ছে…", "Looking for apps…")); Spacer()
-            } else if store.filtered.isEmpty {
-                Spacer()
-                Text(L("কোন software পাওয়া যায়নি", "No software found")).foregroundStyle(.secondary)
-                Spacer()
-            } else {
-                List(store.filtered) { app in
-                    AppRow(app: app, size: store.sizes[app.id])
-                        .contentShape(Rectangle())
-                        .onTapGesture { store.selected = app }
-                        .onAppear { store.loadSize(app) }
-                }
-                .listStyle(.inset)
-            }
-
-            HStack {
-                Text(L("\(store.filtered.count) টি software", "\(store.filtered.count) apps"))
-                Spacer()
-                Text(L("মুছে ফেলা সব কিছু Trash এ যায় — দরকার হলে ফেরত আনতে পারবেন", "Everything removed goes to the Trash — you can get it back if needed"))
-            }
-            .font(.caption).foregroundStyle(.secondary)
-            .padding(.horizontal, 14).padding(.vertical, 8)
+        VStack(spacing: 8) {
+            AppsPanel(store: store)
+            Text(L("মুছে ফেলা সব কিছু Trash এ যায় — দরকার হলে ফেরত আনতে পারবেন", "Everything removed goes to the Trash — you can get it back if needed"))
+                .font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(20)
     }
 }
 

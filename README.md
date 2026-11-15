@@ -28,7 +28,7 @@
 | Platform | Download | Status |
 | --- | --- | --- |
 | 🍎 **macOS** (Apple Silicon + Intel, macOS 13 or later) | [**Download for Mac**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-mac.zip) | ✅ Available |
-| 🪟 **Windows** (10 and 11, 64-bit) | [**Download for Windows**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-windows.zip) | ✅ Available — new! |
+| 🪟 **Windows** (10 and 11, 64-bit) | [**Download for Windows**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/download/v1.0.0/Easy-Uninstall-windows.zip) | ✅ Available — new! |
 
 > 🎉 **Easy Uninstall is now on Windows too!** / **Easy Uninstall এখন Windows এও পাওয়া যাচ্ছে!**
 >
@@ -75,13 +75,14 @@
 
 | | English | বাংলা |
 | --- | --- | --- |
-| 🗑️ | **Uninstall** — type an app's name and remove it. Choose *Only uninstall* (just the app) or *Full uninstall* (app + cache, preferences, logs and every leftover file). | **Uninstall** — নাম লিখে app খুঁজুন। *শুধু Uninstall* অথবা *Full Uninstall* (সব related ফাইল সহ) বেছে নিন। |
+| 🗑️ | **Uninstall** — see all your apps in a grid or list, tick one or many, and remove them together. Choose *Only uninstall* (just the app) or *Full uninstall* (app + cache, preferences, logs and every leftover file). | **Uninstall** — সব app Grid বা List এ দেখুন, এক বা একাধিক app টিক দিয়ে একসাথে মুছুন। *শুধু Uninstall* অথবা *Full Uninstall* (সব related ফাইল সহ) বেছে নিন। |
+| 🖥️ | **Your Mac at a glance** — the home page shows a picture of your exact Mac model, its chip, memory and free space. | **এক নজরে আপনার Mac** — হোম পেজে আপনার Mac এর মডেলের ছবি, chip, RAM আর খালি জায়গা। |
 | ✨ | **Smart Clean** — finds only what's safe to delete (caches, logs, old updates, installers, Trash), shows you the list, then cleans everything in one click. | **Smart Clean** — শুধু নিরাপদে মুছা যায় এমন ফাইল খুঁজে তালিকা দেখায়, তারপর এক click এ সব মুছে Trash ও খালি করে। |
 | 📂 | **Where did my space go?** — browse folders sorted by size. | **জায়গা কোথায় গেল?** — কোন ফোল্ডার কত জায়গা নিচ্ছে দেখুন। |
 | 🐘 | **Big files** — every file over 500 MB, each marked 🟢 safe or 🔴 careful with a plain explanation. | **বড় ফাইল** — 500 MB এর বড় সব ফাইল, প্রতিটায় 🟢 নিরাপদ / 🔴 সাবধান আর ব্যাখ্যা। |
 | 💡 | **Suggestions** — old app versions (e.g. Premiere 2026 + 2027), Adobe Media Cache, leftover folders, Time Machine snapshots. | **পরামর্শ** — পুরোনো version, Adobe Media Cache, অবশিষ্ট ফোল্ডার, snapshot। |
 | 📦 | **Unused software** — apps you haven't opened in months, and background items you can turn off. | **অপ্রয়োজনীয় Software** — অনেকদিন খোলা হয়নি এমন app আর background এ চলা জিনিস বন্ধ করুন। |
-| 🧠 | **RAM** — see which app uses how much memory, spot the same app open twice, and quit with one click. | **RAM** — কোন app কত RAM নিচ্ছে দেখুন, এক click এ বন্ধ করুন। |
+| 🧠 | **RAM** — right on the home page: see which app uses how much memory and quit it, or press **Clean** to quit every safe app at once. | **RAM** — হোম পেজেই: কোন app কত RAM নিচ্ছে দেখুন ও বন্ধ করুন, অথবা **Clean** চেপে সব নিরাপদ app একসাথে বন্ধ করুন। |
 | 🔄 | **One-click updates** — the app tells you when a new version is out and updates itself. | **এক click এ Update** — নতুন version আসলে app নিজেই জানাবে আর update করে নেবে। |
 | 🌐 | **বাংলা and English** — switch any time from the sidebar. | **বাংলা ও English** — sidebar থেকে যেকোনো সময় বদলান। |
 

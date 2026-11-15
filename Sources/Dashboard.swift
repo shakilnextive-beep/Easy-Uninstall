@@ -168,21 +168,25 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: gap) {
                     header
                     HStack(alignment: .top, spacing: gap) {
-                        diskTile.frame(width: col * 2 + gap, height: 250)
+                        diskTile.frame(width: col * 2 + gap, height: 340)
                         VStack(spacing: gap) {
-                            smartTile.frame(height: 119)
-                            cleanTile.frame(height: 119)
-                        }.frame(width: col)
+                            smartTile.frame(height: 104)
+                            topTile.frame(height: 144)
+                            HStack(spacing: gap) {
+                                unusedTile
+                                bigTile
+                            }
+                            .frame(height: 68)
+                        }
+                        .frame(width: col)
                     }
-                    HStack(alignment: .top, spacing: gap) {
-                        ramTile.frame(width: col, height: 170)
-                        topTile.frame(width: col * 2 + gap, height: 170)
+                    Tile(bg: Palette.tile, hoverable: false) {
+                        AppsPanel(store: store, compact: true) { app in
+                            store.picked.insert(app.id)
+                            nav.section = .uninstall
+                        }
                     }
-                    HStack(spacing: gap) {
-                        unusedTile.frame(width: col, height: 120)
-                        appsTile.frame(width: col, height: 120)
-                        bigTile.frame(width: col, height: 120)
-                    }
+                    .frame(height: 420)
                 }
                 .padding(24)
             }
@@ -200,7 +204,7 @@ struct DashboardView: View {
     // Header
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(L("আপনার Mac", "Your Mac")).font(.system(size: 26, weight: .bold, design: .rounded))
                 Text(statusLine).foregroundStyle(.secondary)
@@ -222,7 +226,12 @@ struct DashboardView: View {
         let pct = d.total > 0 ? Int(Double(d.used) / Double(d.total) * 100) : 0
         return Tile(bg: Palette.ink) {
             VStack(alignment: .leading, spacing: 0) {
-                TileLabel(icon: "internaldrive", text: "Macintosh HD", color: Palette.lilac)
+                HStack(alignment: .top) {
+                    TileLabel(icon: "internaldrive", text: "Macintosh HD", color: Palette.lilac)
+                    Spacer()
+                    RamChip(ram: ram, onDark: true) { nav.section = .ram }
+                }
+                DeviceBadge().padding(.top, 6)
                 Spacer()
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(FS.pretty(d.free)).font(.system(size: 46, weight: .bold, design: .rounded))
@@ -251,77 +260,56 @@ struct DashboardView: View {
     }
 
     private var smartTile: some View {
-        let ready = smart.stage == .ready || smart.stage == .done
         let value = smart.stage == .ready ? FS.pretty(smart.selectedSize) : smart.stage == .done ? "✓" : "—"
-        return Tile(bg: Palette.teal.opacity(0.16)) {
-            VStack(alignment: .leading) {
-                TileLabel(icon: "sparkles", text: "Smart Clean", color: Palette.teal)
-                Spacer()
-                Text(value).font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(Palette.teal)
-                Text(ready ? L("নিরাপদে মুছা যাবে", "safe to delete") : L("এখনো পরীক্ষা হয়নি", "not scanned yet"))
-                    .font(.caption).foregroundStyle(.secondary)
+        let sub = smart.stage == .ready ? L("নিরাপদে মুছা যাবে", "safe to delete")
+            : smart.stage == .done ? L("পরিষ্কার হয়ে গেছে", "cleaned")
+            : smart.stage == .scanning ? L("পরীক্ষা হচ্ছে…", "Scanning…") : L("এখনো পরীক্ষা হয়নি", "not scanned yet")
+        return Tile(bg: Palette.teal.opacity(0.16), pad: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    TileLabel(icon: "sparkles", text: "Smart Clean", color: Palette.teal)
+                    Spacer()
+                    Text(value).font(.system(size: 18, weight: .bold, design: .rounded)).foregroundStyle(Palette.teal)
+                }
+                Text(sub).font(.caption).foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Button {
+                    if smart.stage != .ready { smart.scan() }
+                    nav.section = .smart
+                } label: {
+                    Label(L("এক click এ Clean", "One-click clean"), systemImage: smart.stage == .scanning ? "hourglass" : "wand.and.stars")
+                        .font(.callout.weight(.semibold))
+                        .frame(maxWidth: .infinity).padding(.vertical, 7)
+                        .foregroundStyle(.white)
+                        .background(Palette.teal, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                }
+                .buttonStyle(.plain)
             }
         }
         .onTapGesture { nav.section = .smart }
     }
 
-    private var cleanTile: some View {
-        Tile(bg: Palette.teal) {
-            VStack(spacing: 6) {
-                Image(systemName: smart.stage == .scanning ? "hourglass" : "wand.and.stars").font(.system(size: 26, weight: .semibold))
-                Text(L("এক click এ Clean", "One-click clean")).font(.headline)
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .onTapGesture {
-            if smart.stage != .ready { smart.scan() }
-            nav.section = .smart
-        }
-    }
-
-    private var ramTile: some View {
-        let i = ram.info
-        let frac = i.total > 0 ? min(1, Double(i.used) / Double(i.total)) : 0
-        let c: Color = i.pressure >= 4 ? .red : i.pressure >= 2 ? Palette.amber : Palette.teal
-        return Tile(bg: Palette.tile) {
-            VStack(alignment: .leading, spacing: 6) {
-                TileLabel(icon: "memorychip", text: "RAM", color: .secondary)
-                Spacer()
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(String(format: "%.1f", Double(i.used) / 1e9)).font(.system(size: 30, weight: .bold, design: .rounded))
-                    Text("/ \(FS.pretty(i.total))").foregroundStyle(.secondary)
-                }
-                Bar(frac: frac, color: c).frame(height: 8)
-                if i.swapUsed > 4_000_000_000 {
-                    Text(L("Swap \(FS.pretty(i.swapUsed)) — Restart দিলে ভালো", "Swap \(FS.pretty(i.swapUsed)) — a restart would help"))
-                        .font(.caption).foregroundStyle(Palette.amber).lineLimit(1)
-                }
-            }
-        }
-        .onTapGesture { nav.section = .ram }
-    }
-
     private var topTile: some View {
         let top = cleanup.suggestions.filter { $0.size > 0 }.sorted { $0.size > $1.size }.prefix(3)
-        return Tile(bg: Palette.tile) {
-            VStack(alignment: .leading, spacing: 8) {
+        return Tile(bg: Palette.tile, pad: 12) {
+            VStack(alignment: .leading, spacing: 7) {
                 TileLabel(icon: "flame", text: L("সবচেয়ে বেশি জায়গা নিচ্ছে", "Taking the most space"), color: .secondary)
                 if cleanup.scanning {
                     Spacer(); ProgressView().controlSize(.small).frame(maxWidth: .infinity); Spacer()
                 } else {
                     ForEach(Array(top)) { s in
-                        HStack(spacing: 10) {
+                        let c = s.safety == .safe ? Palette.teal : Palette.coral
+                        HStack(spacing: 8) {
                             Image(systemName: s.icon)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(s.safety == .safe ? Palette.teal : Palette.coral)
-                                .frame(width: 26, height: 26)
-                                .background((s.safety == .safe ? Palette.teal : Palette.coral).opacity(0.15), in: RoundedRectangle(cornerRadius: 7))
-                            Text(s.title).lineLimit(1)
-                            Spacer()
-                            Pill(safe: s.safety == .safe)
-                            Text(FS.pretty(s.size)).font(.callout.bold()).monospacedDigit().frame(width: 72, alignment: .trailing)
+                                .font(.system(size: 10, weight: .semibold)).foregroundStyle(c)
+                                .frame(width: 22, height: 22)
+                                .background(c.opacity(0.15), in: RoundedRectangle(cornerRadius: 6))
+                            Text(s.title.replacingOccurrences(of: "পুরনো version: ", with: "পুরনো ").replacingOccurrences(of: "Old version: ", with: "Old "))
+                                .font(.callout).lineLimit(1)
+                            Spacer(minLength: 4)
+                            Text(FS.pretty(s.size)).font(.callout.bold()).monospacedDigit().foregroundStyle(c)
                         }
+                        .help(s.safety == .safe ? L("নিরাপদ", "Safe") : L("সাবধান", "Careful"))
                     }
                     Spacer(minLength: 0)
                 }
@@ -336,11 +324,6 @@ struct DashboardView: View {
                          value: bloat.loadingUsage ? "…" : "\(n)", sub: L("৩ মাস খোলা হয়নি", "not opened in 3 months"), go: .unused)
     }
 
-    private var appsTile: some View {
-        smallTile(icon: "app.badge", label: "Apps", value: store.loading ? "…" : "\(store.apps.count)",
-                  sub: L("Uninstall করতে click করুন", "click to uninstall"), go: .uninstall)
-    }
-
     private var bigTile: some View {
         smallTile(icon: "doc.on.doc", label: L("বড় ফাইল", "Big files"),
                   value: cleanup.bigScanned ? "\(cleanup.bigFiles.count)" : "—",
@@ -348,14 +331,14 @@ struct DashboardView: View {
     }
 
     private func smallTile(icon: String, label: String, value: String, sub: String, go: AppSection) -> some View {
-        Tile(bg: Palette.tile) {
+        Tile(bg: Palette.tile, pad: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                TileLabel(icon: icon, text: label, color: .secondary)
-                Spacer()
-                Text(value).font(.system(size: 28, weight: .bold, design: .rounded))
-                Text(sub).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                TileLabel(icon: icon, text: label, color: .secondary).lineLimit(1)
+                Spacer(minLength: 0)
+                Text(value).font(.system(size: 20, weight: .bold, design: .rounded))
             }
         }
+        .help(sub)
         .onTapGesture { nav.section = go }
     }
 }
@@ -364,19 +347,24 @@ struct DashboardView: View {
 
 struct Tile<Content: View>: View {
     let bg: Color
+    var hoverable = true
+    var pad: CGFloat = 16
     @ViewBuilder let content: Content
     @StateObject private var hover = HoverState()
 
     var body: some View {
         content
-            .padding(16)
+            .padding(pad)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(bg, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.primary.opacity(hover.on ? 0.25 : 0.06)))
-            .scaleEffect(hover.on ? 1.01 : 1)
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.primary.opacity(hover.on && hoverable ? 0.25 : 0.06)))
+            .scaleEffect(hover.on && hoverable ? 1.01 : 1)
             .animation(.easeOut(duration: 0.15), value: hover.on)
             .contentShape(Rectangle())
-            .onHover { hover.on = $0; if $0 { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
+            .onHover { h in
+                guard hoverable else { return }
+                hover.on = h; if h { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+            }
     }
 }
 
