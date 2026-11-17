@@ -201,6 +201,10 @@ final class Store: ObservableObject {
     @Published var selected: InstalledApp?
     @Published var picked: Set<String> = []
     @Published var batch: BatchJob?
+    @Published var filter: AppFilter = .all
+    @Published var copies: [InstalledApp] = []      // extra copies outside the Applications folders
+    @Published var copiesLoading = false
+    @Published var added: [String: Date] = [:]      // install date by app path
     @Published var grid = (UserDefaults.standard.object(forKey: "appsGrid") as? Bool) ?? true {
         didSet { UserDefaults.standard.set(grid, forKey: "appsGrid") }
     }
@@ -210,19 +214,28 @@ final class Store: ObservableObject {
     }
 
     var filtered: [InstalledApp] {
+        let base: [InstalledApp]
+        switch filter {
+        case .all: base = apps
+        case .duplicates: base = duplicateList
+        case .recent: base = recentList
+        }
         let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return apps }
-        return apps.filter { $0.name.localizedCaseInsensitiveContains(q) || $0.bundleID.localizedCaseInsensitiveContains(q) }
+        guard !q.isEmpty else { return base }
+        return base.filter { $0.name.localizedCaseInsensitiveContains(q) || $0.bundleID.localizedCaseInsensitiveContains(q) }
     }
 
     func reload() {
         loading = true
         DispatchQueue.global(qos: .userInitiated).async {
             let list = Scanner.loadApps()
+            var dates: [String: Date] = [:]
+            for a in list { dates[a.id] = Scanner.addedDate(a.url) }
             DispatchQueue.main.async {
                 self.apps = list
-                self.picked = self.picked.filter { id in list.contains { $0.id == id } }
+                self.added = dates
                 self.loading = false
+                self.findCopies()
             }
         }
     }
@@ -259,7 +272,7 @@ struct RootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .overlay { if dropping.on { DropOverlay() } }
                 .sheet(item: $store.batch) { job in
-                    BatchUninstallSheet(apps: job.apps, all: store.apps) { removed in
+                    BatchUninstallSheet(apps: job.apps, all: store.everyApp) { removed in
                         store.batch = nil
                         if removed { store.picked = []; refreshAfterRemove() }
                     }
@@ -280,7 +293,7 @@ struct RootView: View {
             if !bloat.items.isEmpty { bloat.loadItems() }
         }
         .sheet(item: $store.selected) { app in
-            UninstallSheet(app: app, shared: store.apps.contains { $0.id != app.id && !app.bundleID.isEmpty && $0.bundleID == app.bundleID }) { removed in
+            UninstallSheet(app: app, shared: store.everyApp.contains { $0.id != app.id && !app.bundleID.isEmpty && $0.bundleID == app.bundleID }) { removed in
                 store.selected = nil
                 if removed { store.picked.remove(app.id); refreshAfterRemove() }
             }

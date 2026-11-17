@@ -181,12 +181,12 @@ struct DashboardView: View {
                         .frame(width: col)
                     }
                     Tile(bg: Palette.tile, hoverable: false) {
-                        AppsPanel(store: store, compact: true) { app in
+                        // part of the page: scrolling down moves the tiles up and shows every app
+                        AppsPanel(store: store, compact: true, inline: true) { app in
                             store.picked.insert(app.id)
                             nav.section = .uninstall
                         }
                     }
-                    .frame(height: 420)
                 }
                 .padding(24)
             }

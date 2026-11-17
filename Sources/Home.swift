@@ -214,15 +214,56 @@ struct BatchJob: Identifiable {
 struct AppsPanel: View {
     @ObservedObject var store: Store
     var compact = false
+    var inline = false                          // home page: no inner scroll, the whole page scrolls
     var open: ((InstalledApp) -> Void)? = nil   // home page: a click opens the Uninstall page
 
     private func tap(_ app: InstalledApp) {
         if let open { open(app) } else { store.toggle(app) }
     }
 
+    private var emptyText: String {
+        if !store.query.trimmingCharacters(in: .whitespaces).isEmpty { return L("কোন app পাওয়া যায়নি", "No apps found") }
+        switch store.filter {
+        case .all: return L("কোন app পাওয়া যায়নি", "No apps found")
+        case .duplicates: return L("কোনো duplicate app নেই 👍", "No duplicate apps 👍")
+        case .recent: return L("গত \(Store.recentDays) দিনে নতুন কোনো app install হয়নি", "No apps installed in the last \(Store.recentDays) days")
+        }
+    }
+
+    private func tag(_ app: InstalledApp) -> AppTag? {
+        guard store.filter == .duplicates else { return nil }
+        if store.apps.contains(where: { $0.id == app.id }) {
+            return store.isOlderInstalled(app) ? AppTag(text: L("পুরনো version", "Older version"), color: Palette.amber)
+                                               : AppTag(text: L("Install করা", "Installed"), color: Palette.teal)
+        }
+        if app.looksLikeBackup { return AppTag(text: "Build/Backup", color: Palette.amber) }
+        return AppTag(text: L("বাড়তি copy", "Extra copy"), color: Palette.coral)
+    }
+
+    @ViewBuilder private func items(_ list: [InstalledApp]) -> some View {
+        if store.grid {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: compact ? 92 : 104), spacing: 8)], spacing: 8) {
+                ForEach(list) { app in
+                    AppCell(app: app, size: store.sizes[app.id], on: store.picked.contains(app.id),
+                            detail: store.detail(for: app), tag: tag(app)) { tap(app) }
+                        .onAppear { store.loadSize(app) }
+                }
+            }
+            .padding(2)
+        } else {
+            LazyVStack(spacing: 2) {
+                ForEach(list) { app in
+                    AppLine(app: app, size: store.sizes[app.id], on: store.picked.contains(app.id),
+                            detail: store.detail(for: app), tag: tag(app)) { tap(app) }
+                        .onAppear { store.loadSize(app) }
+                }
+            }
+        }
+    }
+
     var body: some View {
         let list = store.filtered
-        let picked = store.apps.filter { store.picked.contains($0.id) }
+        let picked = store.everyApp.filter { store.picked.contains($0.id) }
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 TileLabel(icon: "trash", text: L("Uninstall — \(store.apps.count) টি app", "Uninstall — \(store.apps.count) apps"), color: .secondary)
@@ -236,26 +277,31 @@ struct AppsPanel: View {
                 .help(L("Grid / List", "Grid / List"))
             }
 
-            if store.loading && store.apps.isEmpty {
-                ProgressView(L("Apps খোঁজা হচ্ছে…", "Looking for apps…")).frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if list.isEmpty {
-                Text(L("কোন app পাওয়া যায়নি", "No apps found")).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    if store.grid {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: compact ? 92 : 104), spacing: 8)], spacing: 8) {
-                            ForEach(list) { app in AppCell(app: app, size: store.sizes[app.id], on: store.picked.contains(app.id)) { tap(app) }
-                                .onAppear { store.loadSize(app) } }
-                        }
-                        .padding(2)
-                    } else {
-                        LazyVStack(spacing: 2) {
-                            ForEach(list) { app in AppLine(app: app, size: store.sizes[app.id], on: store.picked.contains(app.id)) { tap(app) }
-                                .onAppear { store.loadSize(app) } }
-                        }
-                    }
+            HStack(spacing: 10) {
+                Picker("", selection: $store.filter) {
+                    Text(L("সব (\(store.apps.count))", "All (\(store.apps.count))")).tag(AppFilter.all)
+                    Text(store.copiesLoading ? "Duplicate (…)" : "Duplicate (\(store.duplicateList.count))").tag(AppFilter.duplicates)
+                    Text(L("নতুন install (\(store.recentList.count))", "Recently installed (\(store.recentList.count))")).tag(AppFilter.recent)
                 }
+                .pickerStyle(.segmented).labelsHidden().fixedSize()
+                Spacer()
+            }
+            if store.filter == .duplicates && !store.duplicateList.isEmpty {
+                Label(L("একই app এর একাধিক copy। Downloads, Documents বা অন্য drive এ পড়ে থাকা বাড়তি copy মুছে জায়গা খালি করুন। \"Build/Backup\" চিহ্ন থাকলে মুছার আগে নিশ্চিত হোন।",
+                        "The same app in more than one place. Remove extra copies left in Downloads, Documents or other drives. Check twice before removing anything marked \"Build/Backup\"."),
+                      systemImage: "doc.on.doc")
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+            }
+
+            if store.loading && store.apps.isEmpty || store.filter == .duplicates && store.copiesLoading && list.isEmpty {
+                ProgressView(L("Apps খোঁজা হচ্ছে…", "Looking for apps…")).frame(maxWidth: .infinity, minHeight: 120, maxHeight: inline ? 120 : .infinity)
+            } else if list.isEmpty {
+                Text(emptyText).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: inline ? 120 : .infinity)
+            } else if inline {
+                items(list)
+            } else {
+                ScrollView { items(list) }
             }
 
             HStack(spacing: 10) {
@@ -298,6 +344,8 @@ struct AppCell: View {
     let app: InstalledApp
     let size: Int64?
     let on: Bool
+    var detail: String? = nil
+    var tag: AppTag? = nil
     let toggle: () -> Void
 
     var body: some View {
@@ -311,6 +359,8 @@ struct AppCell: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(height: 32, alignment: .top)
             Text(size.map { $0 >= 0 ? FS.pretty($0) : "…" } ?? " ").font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+            if let tag { tag }
+            if let detail { Text(detail).font(.caption2).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.head) }
         }
         .padding(8)
         .background(on ? Palette.coral.opacity(0.14) : Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -318,7 +368,7 @@ struct AppCell: View {
         .opacity(app.isProtected ? 0.5 : 1)
         .contentShape(Rectangle())
         .onTapGesture { if !app.isProtected { toggle() } }
-        .help(app.isProtected ? L("Apple এর system app — মুছা বন্ধ", "Apple system app — can't be removed") : app.name)
+        .help(app.isProtected ? L("Apple এর system app — মুছা বন্ধ", "Apple system app — can't be removed") : app.name + (detail.map { "\n" + $0 } ?? ""))
     }
 }
 
@@ -326,6 +376,8 @@ struct AppLine: View {
     let app: InstalledApp
     let size: Int64?
     let on: Bool
+    var detail: String? = nil
+    var tag: AppTag? = nil
     let toggle: () -> Void
 
     var body: some View {
@@ -333,9 +385,16 @@ struct AppLine: View {
             PickMark(on: on, locked: app.isProtected)
             Image(nsImage: IconCache.icon(app.url.path)).resizable().frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 1) {
-                Text(app.name).lineLimit(1)
-                if !app.version.isEmpty { Text("Version \(app.version)").font(.caption2).foregroundStyle(.secondary) }
+                HStack(spacing: 6) {
+                    Text(app.name).lineLimit(1)
+                    if let tag { tag }
+                }
+                let ver = app.version.isEmpty ? nil : "Version \(app.version)"
+                if let line = [ver, detail].compactMap({ $0 }).joined(separator: "  ·  ").nilIfEmpty {
+                    Text(line).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                }
             }
+            .help(detail ?? "")
             Spacer()
             if app.isProtected {
                 Text("System").font(.caption2).padding(.horizontal, 6).padding(.vertical, 2)
@@ -485,4 +544,9 @@ struct BatchUninstallSheet: View {
         }
         return L("⚠️ কিছু ফাইল মুছা যায়নি (password দেননি বা অনুমতি নেই):\n", "⚠️ Some files couldn't be deleted (no password given or no permission):\n") + failed.joined(separator: "\n")
     }
+}
+
+
+extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }
