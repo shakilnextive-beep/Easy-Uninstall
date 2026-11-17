@@ -22,7 +22,7 @@ namespace EasyUninstall
             Gear = "", Download = "", Box = "", Grid = "", Globe = "", Video = "", Code = "",
             Layers = "", Sync = "", Phone = "", Desktop = "", Power = "", Lock = "", Person = "",
             Mail = "", Chat = "", Drive = "", Chip = "", Broom = "", Bolt = "", Apps = "",
-            Copy = "", Pause = "", Open = "";
+            Copy = "", Pause = "", Open = "", Down = "", Laptop = "", Pc = "";
     }
 
     static class Theme

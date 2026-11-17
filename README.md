@@ -138,10 +138,13 @@ build.cmd zip      &:: also makes dist\Easy-Uninstall-windows.zip for a release
 How it differs from the Mac app:
 
 - **Uninstall** runs the program's own uninstaller (like Windows Settings does). **Full Uninstall** then finds what it left behind — program folder, AppData, shortcuts, registry settings — and removes what you tick. Files go to the Recycle Bin; registry settings are backed up first.
+- **Several at once**: tick apps in the grid or list and they are uninstalled one after another (Windows runs only one uninstaller at a time), then all their leftovers are shown in one list.
+- **Drag and drop**: drop a desktop shortcut, a program's `.exe` or its folder onto the window (or onto `Easy Uninstall.exe` itself) to open its uninstall window.
+- **Home page** shows your PC's maker, model, processor and Windows version instead of a picture of the Mac.
 - **Smart Clean** covers app and browser caches, old Temp files, crash dumps, developer caches, installers in Downloads and the Recycle Bin.
 - **Runs in background** lists startup items and uses the same on/off switch as Task Manager.
 - Microsoft Store apps are not listed yet; the app points you to Windows Settings for those.
-- Dry runs from a terminal, nothing is deleted: `"Easy Uninstall.exe" --smart | more` (also `--apps`, `--scan "name"`, `--suggest`, `--big`, `--bloat`, `--ram`).
+- Dry runs from a terminal, nothing is deleted: `"Easy Uninstall.exe" --smart | more` (also `--apps`, `--scan "name"`, `--drop "path"`, `--suggest`, `--big`, `--bloat`, `--ram`).
 
 ### Publishing a new version
 

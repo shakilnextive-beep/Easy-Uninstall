@@ -137,6 +137,27 @@ namespace EasyUninstall
                 r => { busy = false; if (r == null) return; Info = r.Item1; Apps = r.Item2; Loaded = true; App.Invalidate(); });
         }
 
+        /// Normal quit (the app asks to save). Red apps need a confirmation first.
+        public void AskQuit(RamApp a)
+        {
+            if (!a.Caution || Dialogs.Confirm(L.T(a.Name + " বন্ধ করবেন?", "Quit " + a.Name + "?"), a.Note, L.T("বন্ধ করুন", "Quit"), true)) Quit(a);
+        }
+
+        /// "Clean RAM": quits every green (safe) app after one confirmation.
+        public void CleanSafe()
+        {
+            var green = Apps.Where(a => !a.Caution).ToList();
+            if (green.Count == 0)
+            {
+                Dialogs.Info(L.T("RAM পরিষ্কার আছে", "RAM is already clean"), L.T("বন্ধ করার মতো নিরাপদ কোনো app চলছে না। লাল app গুলো কাজের app — সেগুলো নিজে save করে বন্ধ করুন।", "No safe-to-quit apps are running. The red ones are work apps — save and quit them yourself."));
+                return;
+            }
+            if (Dialogs.Confirm(L.T("RAM পরিষ্কার করবেন?", "Clean RAM?"),
+                L.T("এই " + green.Count + " টি app বন্ধ হবে, প্রায় " + FS.Pretty(green.Sum(a => a.Memory)) + " RAM খালি হবে:\n\n", "These " + green.Count + " apps will quit, freeing about " + FS.Pretty(green.Sum(a => a.Memory)) + " of RAM:\n\n")
+                + string.Join(", ", green.Select(a => a.Name)) + L.T("\n\nকাজের app (লাল) গুলো বন্ধ হবে না।", "\n\nWork apps (red) are left open."), L.T("পরিষ্কার করুন", "Clean")))
+                foreach (var a in green) Quit(a);
+        }
+
         public void Quit(RamApp a)
         {
             RamScanner.Quit(a);

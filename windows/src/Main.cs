@@ -25,6 +25,11 @@ namespace EasyUninstall
     {
         public List<InstalledApp> Apps = new List<InstalledApp>();
         public bool Loading;
+        public string Query = "";
+        public HashSet<string> Picked = new HashSet<string>();
+        public bool Grid = Settings.Get("AppsGrid", true);
+
+        public List<InstalledApp> Filtered { get { return Apps.Where(a => Kinds.Matches(Query, a.Name, a.Publisher)).ToList(); } }
 
         public void Reload()
         {
@@ -32,7 +37,9 @@ namespace EasyUninstall
             Loading = true; App.Invalidate();
             Bg.Run(() => InstalledApp.LoadAll(), list =>
             {
-                Apps = list ?? new List<InstalledApp>(); Loading = false; App.Invalidate();
+                Apps = list ?? new List<InstalledApp>(); Loading = false;
+                Picked.RemoveWhere(id => !Apps.Any(a => a.Id == id));
+                App.Invalidate();
                 // Windows doesn't know the size of every program: measure the rest in the background
                 var todo = Apps.Where(a => a.Size < 0 && a.Dir != "").ToList();
                 Bg.Run(() => { foreach (var a in todo) a.Size = FS.Size(a.Dir); }, () => App.Invalidate());
@@ -59,10 +66,16 @@ namespace EasyUninstall
 
         public static void Go(Section s) { if (Window != null) Window.Navigate(s); }
 
-        public static void Uninstall(InstalledApp app)
+        public static void Uninstall(InstalledApp app) { Uninstall(new List<InstalledApp> { app }); }
+
+        /// Opens the uninstall window for one program or several, then refreshes everything that depends on the app list.
+        public static void Uninstall(List<InstalledApp> apps)
         {
-            bool removed = new UninstallDialog(app).Run();
-            if (!removed) return;
+            apps = apps.Where(a => !a.IsProtected || apps.Count == 1).ToList();
+            if (apps.Count == 0) return;
+            bool removed = new UninstallDialog(apps).Run();
+            if (!removed) { Invalidate(); return; }
+            foreach (var a in apps) Store.Picked.Remove(a.Id);
             Store.Reload(); Cleanup.RefreshDisk(); Cleanup.Suggestions.Clear(); Cleanup.SuggestScanned = false;
             Bloat.Usage.Clear(); Bloat.UsageLoaded = false; Bloat.ItemsLoaded = false;
             Invalidate();
@@ -110,6 +123,35 @@ namespace EasyUninstall
                 Navigate(section);
             };
             Loaded += (s, e) => { App.Store.Reload(); Updater.Check(true); };
+
+            // Drag a shortcut, a program or its folder onto the window to uninstall it
+            var over = new Border { Background = Theme.B("#99000000"), Visibility = Visibility.Collapsed, IsHitTestVisible = false,
+                Child = new Border { Background = Theme.Window, BorderBrush = Theme.B(Theme.Coral), BorderThickness = new Thickness(3), CornerRadius = new CornerRadius(22), Padding = new Thickness(40, 32, 40, 32),
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                    Child = UI.Center(UI.IconBox(Glyph.Trash, Theme.B(Theme.Coral), 64), UI.Big(L.T("এখানে ছেড়ে দিন — Uninstall হবে", "Drop here to uninstall"), 20).M(0, 14, 0, 6),
+                        UI.Text(L.T("মুছার আগে কী কী যাবে দেখিয়ে জিজ্ঞেস করবে", "You'll see what will be removed before anything is deleted"), 13, Theme.Sub)) } };
+            Grid.SetColumnSpan(over, 2); g.Children.Add(over);
+            AllowDrop = true;
+            bool leaving = false;
+            DragOver += (s, e) =>
+            {
+                bool files = e.Data.GetDataPresent(DataFormats.FileDrop);
+                e.Effects = files ? DragDropEffects.Copy : DragDropEffects.None; e.Handled = true;
+                leaving = false; over.Visibility = files ? Visibility.Visible : Visibility.Collapsed;
+            };
+            DragLeave += (s, e) =>
+            {
+                leaving = true;   // also fires when moving between parts of the window: hide only if no DragOver follows
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => { if (leaving) over.Visibility = Visibility.Collapsed; }));
+            };
+            Drop += (s, e) =>
+            {
+                over.Visibility = Visibility.Collapsed;
+                var paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (paths == null || paths.Length == 0) return;
+                Activate();
+                Dispatcher.BeginInvoke(new Action(() => EasyUninstall.Drop.Handle(paths)));   // let Explorer finish the drag first
+            };
             Navigate(Section.Home);
         }
 
@@ -232,9 +274,10 @@ namespace EasyUninstall
                 else
                 {
                     // the uninstall window for one app — opened for a picture only, nothing is uninstalled
-                    var app = InstalledApp.LoadAll().FirstOrDefault(x => x.Name.ToLowerInvariant().Contains((appName ?? "").ToLowerInvariant()));
-                    if (app == null) { Application.Current.Shutdown(); return; }
-                    var d = new UninstallDialog(app); target = d; d.Show();
+                    var wanted = (appName ?? "").ToLowerInvariant().Split('|');   // several names: "a|b|c"
+                    var picked = InstalledApp.LoadAll().Where(x => wanted.Any(n => n != "" && x.Name.ToLowerInvariant().Contains(n))).ToList();
+                    if (picked.Count == 0) { Application.Current.Shutdown(); return; }
+                    var d = new UninstallDialog(picked); target = d; d.Show();
                     if (what.ToLowerInvariant() == "review") d.PreviewLeftovers();
                 }
                 var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(waitSeconds) };
@@ -263,6 +306,8 @@ namespace EasyUninstall
         {
             if (args.Length >= 2 && args[0] == "--recycle-list") { Recycle.RunElevatedList(args[1]); return 0; }
             if (args.Length >= 1 && args[0].StartsWith("--") && args[0] != "--shot") return DryRun(args);
+            // a shortcut, program or folder dropped on the .exe icon (or "Open with")
+            var dropped = args.Where(a => !a.StartsWith("--") && FS.Exists(a)).ToList();
 
             var app = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
             Bg.Ui = app.Dispatcher;
@@ -276,6 +321,7 @@ namespace EasyUninstall
             if (shot && args.Length >= 4) L.UseOnce(args[3] == "en");
             var w = new MainWindow();
             App.Window = w;
+            if (!shot && dropped.Count > 0) w.ContentRendered += (s, e) => Drop.Handle(dropped);
             if (shot)
             {
                 if (args[1].ToLowerInvariant() == "smart") App.Cleanup.Smart.Scan();
@@ -297,6 +343,15 @@ namespace EasyUninstall
                 case "--apps":
                     foreach (var x in InstalledApp.LoadAll()) o.WriteLine((x.IsProtected ? "[system] " : "") + x.Name + "  " + x.Version + "  | " + x.Publisher + " | " + (x.Dir == "" ? "(no folder)" : x.Dir) + " | " + (x.Size >= 0 ? FS.Pretty(x.Size) : "?"));
                     break;
+                case "--drop":      // --drop "path" ...: which program a dropped shortcut / file / folder would open
+                    var installed = InstalledApp.LoadAll();
+                    foreach (var p in a.Skip(1).Where(p => p != "en"))
+                    {
+                        var hit = Drop.Resolve(p, installed);
+                        o.WriteLine(p + "  ->  " + (hit == null ? "(not an installed program)" : hit.Name + (hit.IsProtected ? "  [blocked]" : "")));
+                    }
+                    break;
+                case "--device": o.WriteLine(DeviceInfo.Name + " | " + DeviceInfo.Chip + " | " + DeviceInfo.Os + " | " + (DeviceInfo.IsLaptop ? "laptop" : "desktop")); break;
                 case "--scan":      // --scan "App Name": what Full Uninstall would look for
                     var all = InstalledApp.LoadAll();
                     foreach (var x in all.Where(x => a.Length > 1 && x.Name.ToLowerInvariant().Contains(a[1].ToLowerInvariant())))

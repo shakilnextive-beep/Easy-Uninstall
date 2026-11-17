@@ -215,7 +215,7 @@ namespace EasyUninstall
 
     class Leftover
     {
-        public string Path; public long Size; public bool Selected = true; public bool IsRegistry;
+        public string Path, Owner; public long Size; public bool Selected = true; public bool IsRegistry;
     }
 
     static class Leftovers
