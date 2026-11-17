@@ -34,7 +34,7 @@ namespace EasyUninstall
         static WebClient Client()
         {
             ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072;   // TLS 1.2
-            var c = new WebClient();
+            var c = new WebClient { Encoding = System.Text.Encoding.UTF8 };   // release notes are UTF-8 (Bangla)
             c.Headers[HttpRequestHeader.UserAgent] = "EasyUninstall";
             c.Headers[HttpRequestHeader.Accept] = "application/vnd.github+json";
             return c;
