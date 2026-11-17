@@ -28,7 +28,7 @@
 | Platform | Download | Status |
 | --- | --- | --- |
 | 🍎 **macOS** (Apple Silicon + Intel, macOS 13 or later) | [**Download for Mac**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-mac.zip) | ✅ Available |
-| 🪟 **Windows** (10 and 11, 64-bit) | [**Download for Windows**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/download/v1.0.0/Easy-Uninstall-windows.zip) | ✅ Available — new! |
+| 🪟 **Windows** (10 and 11, 64-bit) | [**Download for Windows**](https://github.com/shakilnextive-beep/Easy-Uninstall/releases/latest/download/Easy-Uninstall-windows.zip) | ✅ Available — new! |
 
 > 🎉 **Easy Uninstall is now on Windows too!** / **Easy Uninstall এখন Windows এও পাওয়া যাচ্ছে!**
 >
